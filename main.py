@@ -201,6 +201,8 @@ class HwydScreen(BoxLayout):
 
     def on_okay(self, question_json, popup):
         self.data['format'].append(question_json)
+        with open(self.f_name, 'w') as f:
+            f.write(json.dumps(self.data, indent=4))
         popup.dismiss()
 
 
