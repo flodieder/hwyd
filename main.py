@@ -8,11 +8,14 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.textinput import TextInput
 from kivy.uix.button import Button
 from kivy.uix.popup import Popup
+from kivy.uix.scrollview import ScrollView
 from calendar_ui import CalendarWidget
 from kivy.utils import platform
 from kivy.uix.actionbar import ActionBar, ActionGroup, ActionView, ActionButton, ActionOverflow, ActionPrevious
 from kivy.uix.filechooser import FileChooserListView, FileChooserIconView, FileChooser
 from kivy.utils import platform
+from kivy.core.window import Window
+from kivy.metrics import dp, sp
 import os
 import json
 from pathlib import Path
@@ -22,10 +25,12 @@ if platform == 'android':
     from android.storage import app_storage_path, primary_external_storage_path, secondary_external_storage_path
     from android.permissions import request_permissions, Permission
 
+Window.softinput_mode='below_target'
+
 class HwydScreen(BoxLayout):
 
     def __init__(self, **kwargs):
-        super(HwydScreen, self).__init__(orientation='vertical')
+        super(HwydScreen, self).__init__(orientation='vertical', spacing=dp(10))
         self.config_file = kwargs['config_file']
         with open(self.config_file, 'r') as f:
             try:
@@ -65,9 +70,15 @@ class HwydScreen(BoxLayout):
 
 
 
-        self.calendar = CalendarWidget()
+        self.calendar = CalendarWidget(size_hint=(1, 0.3))
         self.calendar.bind(current_date=self.on_calendar_touch)
         self.add_widget(self.calendar)
+
+        scroll_view = ScrollView(size_hint=(1, 0.6))
+        scroll_view.do_scroll_x=False
+        scroll_view.do_scroll_y=True
+        scroll_view_content = GridLayout(size_hint_y=None,cols = 1, spacing=dp(60), padding=(0, dp(20), 0, dp(20)))
+        scroll_view_content.bind(minimum_height=lambda instance, value: self.adjust_scroll_view_height(instance, value))
 
         # try if no 'format' key 
         try:
@@ -80,21 +91,28 @@ class HwydScreen(BoxLayout):
             for question in self.data['format']:
                 qw = QuestionWidget(**question)
                 qw.bind(changed=self.on_question_change)
+                # qw.size_hint_y=None
                 self.question_widgets[question['question']] = qw
                 # try if no 'question' key
                 try:
                     qw.load_answer(answers[question['question']])
                 except:
                     qw.clear_answer()
-                self.add_widget(qw)
-        except:
+                scroll_view_content.add_widget(qw)
+        except KeyError:
             self.data['format'] = []
+        except:
+            pass
         
+        scroll_view.add_widget(scroll_view_content)
+        self.add_widget(scroll_view)
 
-
-        self.add_question_button = Button(text='Add Question')
+        self.add_question_button = Button(text='Add Question', size_hint=(0.3, 0.1), pos_hint={'center_x' : 0.5})
         self.add_question_button.bind(on_press=self.add_question)
         self.add_widget(self.add_question_button)
+
+    def adjust_scroll_view_height(self, instance, value):
+        instance.height = value + len(self.children)*dp(10)
 
     def on_file(self, instance):
         content = BoxLayout(orientation='vertical')
@@ -173,12 +191,18 @@ class HwydScreen(BoxLayout):
         inclusive_opt_txt = TextInput(hint_text='Inclusive Option')
         inclusive_opt_btn = Button(text='Add')
         inclusive_opt_btn.bind(on_press=lambda instance: question_json['options'].append(['inclusive option', inclusive_opt_txt.text]))
+        counter_txt = TextInput(hint_text='What sould be counted?')
+        counter_btn = Button(text='Add')
+        counter_btn.bind(on_press=lambda instance: question_json['options'].append(['counter', counter_txt.text]))
+
         answer_layout.add_widget(unconstrained_txt)
         answer_layout.add_widget(unconstrained_btn)
         answer_layout.add_widget(exclusive_opt_txt)
         answer_layout.add_widget(exclusive_opt_btn)
         answer_layout.add_widget(inclusive_opt_txt)
         answer_layout.add_widget(inclusive_opt_btn)
+        answer_layout.add_widget(counter_txt)
+        answer_layout.add_widget(counter_btn)
 
         button_layout = BoxLayout(orientation='horizontal')
         ok_button = Button(text='OK', size_hint=(0.2, 0.2))
