@@ -21,7 +21,10 @@ class QuestionWidget(GridLayout):
 
     def __init__(self, **kwargs):
         super(QuestionWidget, self).__init__(cols=1, size_hint_y=None, row_default_height=dp(40))
+        self.load_question(**kwargs)
 
+    def load_question(self, **kwargs):
+        self.clear_widgets()
         # There is no reason to have three here...
         self.inclusive_layout = None
         self.exclusive_layout = None
@@ -45,19 +48,23 @@ class QuestionWidget(GridLayout):
             if opt == 'inclusive option':
                 if self.inclusive_layout == None:
                     self.inclusive_layout = BoxLayout(orientation='horizontal')
-                self.inclusive_layout.add_widget(Label(text=text))
+                label_cb_layout = BoxLayout(orientation='vertical')
+                label_cb_layout.add_widget(Label(text=text))
                 cb = CheckBox()
                 cb.bind(active=self.create_callback(text))
-                self.inclusive_layout.add_widget(cb)
+                label_cb_layout.add_widget(cb)
+                self.inclusive_layout.add_widget(label_cb_layout)
                 self.option_widgets[text] = cb
                 self.answer[text] = False
             if opt == 'exclusive option':
                 if self.exclusive_layout == None:
                     self.exclusive_layout = BoxLayout(orientation='horizontal')
-                self.exclusive_layout.add_widget(Label(text=text))
+                label_cb_layout = BoxLayout(orientation='vertical')
+                label_cb_layout.add_widget(Label(text=text))
                 cb = CheckBox(group=self.question)
                 cb.bind(active=self.create_callback(text))
-                self.exclusive_layout.add_widget(cb)
+                label_cb_layout.add_widget(cb)
+                self.exclusive_layout.add_widget(label_cb_layout)
                 self.option_widgets[text]=cb
                 self.answer[text] = False
             if opt == 'counter':
@@ -66,7 +73,7 @@ class QuestionWidget(GridLayout):
                 
                 plus_btn = Button(text='+')
                 minus_btn = Button(text='-')
-                count_input = TextInput(input_filter='float')
+                count_input = TextInput(input_filter='float', multiline=False)
                 count_input.bind(text=self.create_callback(text))
                 plus_btn.bind(on_press= lambda instance: self.on_plus(instance, count_input))
                 minus_btn.bind(on_press= lambda instance: self.on_minus(instance, count_input))
