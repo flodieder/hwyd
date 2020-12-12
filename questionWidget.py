@@ -22,17 +22,16 @@ class QuestionWidget(GridLayout):
     format_changed = BooleanProperty(True)
     removed = BooleanProperty(True)
 
-
     def __init__(self, **kwargs):
         super(QuestionWidget, self).__init__(cols=1, size_hint_y=None, row_default_height=dp(40))
         self.question_json = kwargs
         self.answer = {}
         self.option_widgets = {}
-
         self.question_layout = BoxLayout(orientation='horizontal', size_hint=(1, 0.4))
-        self.edit_question_btn = Button(text='Edit', size_hint=(0.05, 0.5))
+        self.edit_question_btn = Button(text='edit', size_hint=(0.05, 0.5))
         self.edit_question_btn.bind(on_press=lambda instance: self.on_edit_question(instance))
-        self.question_layout.add_widget(Label(text=self.question_json['question'][0], size_hint=(0.9, 1)))
+        self.question_layout.add_widget(
+            Label(text=self.question_json['question'][0], size_hint=(0.9, 1)))
 
         self.question_layout.add_widget(self.edit_question_btn)
         self.add_widget(self.question_layout)
@@ -40,42 +39,43 @@ class QuestionWidget(GridLayout):
         self.inclusive_layout = None
         self.exclusive_layout = None
         self.counter_layout = None
+        self.label_cb_layout = None
 
         for opts in self.question_json['options']:
             opt = opts[0]
             text = opts[1]
             if opt == 'unconstrained input':
-                text_input = TextInput(hint_text=text, multiline = False)
-                text_input.bind(text=self.create_callback(text))
-                self.add_widget(text_input)
-                self.option_widgets[text] = text_input
+                self.text_input = TextInput(hint_text=text, multiline=False)
+                self.text_input.bind(text=self.create_callback(text))
+                self.add_widget(self.text_input)
+                self.option_widgets[text] = self.text_input
                 self.answer[text] = ""
             if opt == 'inclusive option':
                 if self.inclusive_layout == None:
                     self.inclusive_layout = BoxLayout(orientation='horizontal')
-                label_cb_layout = BoxLayout(orientation='vertical')
-                label_cb_layout.add_widget(Label(text=text))
+                self.label_cb_layout = BoxLayout(orientation='vertical')
+                self.label_cb_layout.add_widget(Label(text=text))
                 cb = CheckBox()
                 cb.bind(active=self.create_callback(text))
-                label_cb_layout.add_widget(cb)
-                self.inclusive_layout.add_widget(label_cb_layout)
+                self.label_cb_layout.add_widget(cb)
+                self.inclusive_layout.add_widget(self.label_cb_layout)
                 self.option_widgets[text] = cb
                 self.answer[text] = False
             if opt == 'exclusive option':
                 if self.exclusive_layout == None:
                     self.exclusive_layout = BoxLayout(orientation='horizontal')
-                label_cb_layout = BoxLayout(orientation='vertical')
-                label_cb_layout.add_widget(Label(text=text))
-                cb = CheckBox(group=self.question_json['question'][0])
+                self.label_cb_layout = BoxLayout(orientation='vertical')
+                self.label_cb_layout.add_widget(Label(text=text))
+                cb = CheckBox(group=str(self) + self.question_json['question'][0])
                 cb.bind(active=self.create_callback(text))
-                label_cb_layout.add_widget(cb)
-                self.exclusive_layout.add_widget(label_cb_layout)
-                self.option_widgets[text]=cb
+                self.label_cb_layout.add_widget(cb)
+                self.exclusive_layout.add_widget(self.label_cb_layout)
+                self.option_widgets[text] = cb
                 self.answer[text] = False
             if opt == 'counter':
-                if self.counter_layout == None:      
+                if self.counter_layout == None:
                     self.counter_layout = BoxLayout(orientation='horizontal')
-                
+
                 plus_btn = Button(text='+')
                 minus_btn = Button(text='-')
                 count_input = TextInput(input_filter='float', multiline=False)
@@ -85,9 +85,8 @@ class QuestionWidget(GridLayout):
                 self.counter_layout.add_widget(plus_btn)
                 self.counter_layout.add_widget(count_input)
                 self.counter_layout.add_widget(minus_btn)
-                self.option_widgets[text]=count_input
+                self.option_widgets[text] = count_input
                 self.answer[text] = 0.0
-
 
         if self.inclusive_layout != None:
             self.add_widget(self.inclusive_layout)
@@ -96,11 +95,13 @@ class QuestionWidget(GridLayout):
         if self.counter_layout != None:
             self.add_widget(self.counter_layout)
 
-        self.answer_changed = not self.answer_changed
+        # self.answer_changed = not self.answer_changed
 
     def on_edit_question(self, instance):
         from editQuestionPopup import EditQuestionPopup
-        popup = EditQuestionPopup(title='Edit the Question', auto_dismiss=False, question_json=self.question_json)
+        popup = EditQuestionPopup(title='Edit the Question',
+                                  auto_dismiss=False,
+                                  question_json=self.question_json)
         popup.bind(finished=lambda instance, value: self.on_edit_question_finisehd(popup))
         popup.bind(removed=lambda instance, value: self.on_question_removed())
         popup.open()
@@ -120,20 +121,22 @@ class QuestionWidget(GridLayout):
                 self.option_widgets[text].text = str(float(self.option_widgets[text].text) + 1)
             except ValueError:
                 if self.option_widgets[text].text == '':
-                    self.option_widgets[text].text=str(1.0)
+                    self.option_widgets[text].text = str(1.0)
                 else:
-                    self.option_widgets[text].text=str(0.0)
+                    self.option_widgets[text].text = str(0.0)
+
         return on_plus
-    
+
     def create_on_minus(self, text):
         def on_minus(instance):
             try:
                 self.option_widgets[text].text = str(float(self.option_widgets[text].text) - 1)
             except ValueError:
                 if self.option_widgets[text].text == '':
-                    self.option_widgets[text].text=str(-1.0)
+                    self.option_widgets[text].text = str(-1.0)
                 else:
-                    self.option_widgets[text].text=str(0.0)
+                    self.option_widgets[text].text = str(0.0)
+
         return on_minus
 
     def load_answer(self, answer):
@@ -167,15 +170,16 @@ class QuestionWidget(GridLayout):
                     pass
 
     def clear_answer(self):
-        for key in self.option_widgets:                
+        for key in self.option_widgets:
             w = self.option_widgets[key]
             if type(w) == CheckBox:
                 w.active = False
             elif type(w) == TextInput:
                 w.text = ''
 
-    def create_callback(self,text):
+    def create_callback(self, text):
         def callback(instance, value):
             self.answer[text] = value
             self.answer_changed = not self.answer_changed
+
         return callback
