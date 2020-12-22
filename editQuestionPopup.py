@@ -1,6 +1,6 @@
 import kivy
 
-kivy.require('1.0.6')
+kivy.require('2.0.0')
 from kivy.app import App
 from kivy.uix.label import Label
 from kivy.uix.boxlayout import BoxLayout
@@ -41,9 +41,9 @@ class EditQuestionPopup(Popup):
 
         self.scheduling_layout = BoxLayout(orientation='horizontal', size_hint_y=0.01)
         scheduling_scheme = self.question_json['scheduling'][0]
-        schedule_spinner = Spinner(text=scheduling_scheme,
-                                   values=('daily', 'weekly', 'monthly'),
-                                   size_hint=(1, 1))
+        self.schedule_spinner = Spinner(text=scheduling_scheme,
+                                        values=('daily', 'weekly', 'monthly'),
+                                        size_hint=(1, 1))
         if scheduling_scheme == 'daily':
             self.second_schedule_spinner = Spinner(text='', size_hint=(1, 1))
         elif scheduling_scheme == 'weekly':
@@ -55,8 +55,9 @@ class EditQuestionPopup(Popup):
             self.second_schedule_spinner = Spinner(values=('Start', 'Mid', 'End'))
             self.second_schedule_spinner.text = self.question_json['scheduling'][1]
         self.second_schedule_spinner.bind(text=self.on_second_schedule_spinner)
-        schedule_spinner.bind(text=lambda instance, txt: self.on_schedule_spinner(instance, txt))
-        self.scheduling_layout.add_widget(schedule_spinner)
+        self.schedule_spinner.bind(
+            text=lambda instance, txt: self.on_schedule_spinner(instance, txt))
+        self.scheduling_layout.add_widget(self.schedule_spinner)
         self.scheduling_layout.add_widget(self.second_schedule_spinner)
         self.content.add_widget(self.scheduling_layout)
 
@@ -144,30 +145,23 @@ class EditQuestionPopup(Popup):
 
     def on_schedule_spinner(self, instance, value):
         self.question_json['scheduling'][0] = value
+        self.scheduling_layout.remove_widget(self.second_schedule_spinner)
         if value == 'daily':
-            self.scheduling_layout.remove_widget(self.second_schedule_spinner)
             self.second_schedule_spinner = Spinner(text='', size_hint=(1, 1))
-            self.second_schedule_spinner.bind(text=self.on_second_schedule_spinner)
-            self.scheduling_layout.add_widget(self.second_schedule_spinner)
         elif value == 'weekly':
-            self.scheduling_layout.remove_widget(self.second_schedule_spinner)
             self.second_schedule_spinner = Spinner(values=('Monday', 'Tuesday', 'Wednesday',
                                                            'Thursday', 'Friday', 'Saturday',
                                                            'Sunday'))
-            self.second_schedule_spinner.bind(text=self.on_second_schedule_spinner)
             self.second_schedule_spinner.text = 'Monday'
-            self.scheduling_layout.add_widget(self.second_schedule_spinner)
         elif value == 'monthly':
-            self.scheduling_layout.remove_widget(self.second_schedule_spinner)
             self.second_schedule_spinner = Spinner(values=('Start', 'Mid', 'End'))
-            self.second_schedule_spinner.bind(text=self.on_second_schedule_spinner)
             self.second_schedule_spinner.text = 'Start'
-            self.scheduling_layout.add_widget(self.second_schedule_spinner)
+        self.second_schedule_spinner.bind(text=self.on_second_schedule_spinner)
+        self.scheduling_layout.add_widget(self.second_schedule_spinner)
         self.refresh_question_widget()
 
     def on_second_schedule_spinner(self, instance, value):
-        if len(self.question_json['scheduling']) > 1:
-            self.question_json['scheduling'].pop()
+        self.question_json['scheduling'].pop()
         self.question_json['scheduling'].append(value)
         self.refresh_question_widget()
 

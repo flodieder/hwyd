@@ -1,6 +1,6 @@
 import kivy
 
-kivy.require('1.0.6')
+kivy.require('2.0.0')
 from kivy.app import App
 from kivy.uix.label import Label
 from kivy.uix.boxlayout import BoxLayout
@@ -13,36 +13,88 @@ from calendar_ui import CalendarWidget
 from kivy.utils import platform
 from kivy.uix.actionbar import ActionBar, ActionGroup, ActionView, ActionButton, ActionOverflow, ActionPrevious
 from kivy.uix.filechooser import FileChooserListView, FileChooserIconView, FileChooser
+from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.utils import platform
 from kivy.core.window import Window
 from kivy.metrics import dp, sp
+from kivy.properties import ObjectProperty
 import os
 import json
 from pathlib import Path
 from datetime import date
+import plyer
 
 from questionWidget import QuestionWidget
 from editQuestionPopup import EditQuestionPopup
 if platform == 'android':
     from android.storage import app_storage_path, primary_external_storage_path, secondary_external_storage_path
     from android.permissions import request_permissions, Permission
+    from android import AndroidService
 
 Window.softinput_mode = 'below_target'
 
 
-class HwydScreen(BoxLayout):
+class HwydScreen(Screen):
     def __init__(self, **kwargs):
-        super(HwydScreen, self).__init__(orientation='vertical', spacing=dp(10))
+        super(HwydScreen, self).__init__()
+        self.name = 'HWYD_main_screen'
+        self.screen_manager = kwargs['screen_manager']
+        Window.bind(on_key_down=self.on_keyboard_down)
+        # self.keyboard = Window.request_keyboard(None, self)
+        # self.keyboard.bind(on_key_down=self.on_keyboard_down)
+        self.top_layout = BoxLayout(orientation='vertical', spacing=dp(10))
+        self.init_data(kwargs['root_dir'])
+        self.init_layout()
+
+    def init_layout(self):
+        self.question_widgets = {}
+
+        self.action_bar = ActionBar(pos_hint={'top': 1.3})
+        self.action_view = ActionView()
+        self.action_previous = ActionPrevious(with_previous=False)
+        self.action_view.add_widget(self.action_previous)
+        self.choose_file_btn = ActionButton(text='File')
+        self.choose_file_btn.bind(on_press=self.on_file)
+        self.action_view.add_widget(self.choose_file_btn)
+        self.action_bar.add_widget(self.action_view)
+        self.top_layout.add_widget(self.action_bar)
+
+        self.calendar = CalendarWidget(size_hint=(1, 0.3))
+        self.calendar.bind(current_date=lambda instance, value: self.load_format())
+        self.top_layout.add_widget(self.calendar)
+
+        self.scroll_view = ScrollView(size_hint=(1, 0.6))
+        self.scroll_view.do_scroll_x = False
+        self.scroll_view.do_scroll_y = True
+        self.scroll_view_content = GridLayout(size_hint_y=None,
+                                              cols=1,
+                                              spacing=dp(60),
+                                              padding=(0, dp(20), 0, dp(20)))
+
+        self.scroll_view_content.bind(
+            minimum_height=lambda instance, value: self.adjust_scroll_view_height(instance, value))
+        self.scroll_view.add_widget(self.scroll_view_content)
+
+        self.load_format()
+
+        self.top_layout.add_widget(self.scroll_view)
+
+        self.add_question_button = Button(text='Add Question',
+                                          size_hint=(0.3, 0.1),
+                                          pos_hint={'center_x': 0.5})
+        self.add_question_button.bind(on_press=self.on_add_question)
+        self.top_layout.add_widget(self.add_question_button)
+        self.add_widget(self.top_layout)
+
+    def init_data(self, root_dir):
         if platform == 'android':
             request_permissions([Permission.WRITE_EXTERNAL_STORAGE])
 
-        if not os.path.exists(kwargs['root_dir']):
-            os.makedirs(kwargs['root_dir'])
-        self.config_file = os.path.join(kwargs['root_dir'], 'config.json')
+        if not os.path.exists(root_dir):
+            os.makedirs(root_dir)
+        self.config_file = os.path.join(root_dir, 'config.json')
         p = Path(self.config_file)
         p.touch(exist_ok=True)
-
-        self.question_widgets = {}
 
         with open(self.config_file, 'r') as f:
             try:
@@ -67,44 +119,8 @@ class HwydScreen(BoxLayout):
             Path(self.f_name).touch()
             self.data = {}
 
-        self.action_bar = ActionBar(pos_hint={'top': 1.3})
-        self.action_view = ActionView()
-        self.action_previous = ActionPrevious(with_previous=False)
-        self.action_view.add_widget(self.action_previous)
-        self.choose_file_btn = ActionButton(text='File')
-        self.choose_file_btn.bind(on_press=self.on_file)
-        self.action_view.add_widget(self.choose_file_btn)
-        self.action_bar.add_widget(self.action_view)
-        self.add_widget(self.action_bar)
-
-        self.calendar = CalendarWidget(size_hint=(1, 0.3))
-        self.calendar.bind(current_date=lambda instance, value: self.load_format())
-        self.add_widget(self.calendar)
-
-        self.scroll_view = ScrollView(size_hint=(1, 0.6))
-        self.scroll_view.do_scroll_x = False
-        self.scroll_view.do_scroll_y = True
-        self.scroll_view_content = GridLayout(size_hint_y=None,
-                                              cols=1,
-                                              spacing=dp(60),
-                                              padding=(0, dp(20), 0, dp(20)))
-
-        self.scroll_view_content.bind(
-            minimum_height=lambda instance, value: self.adjust_scroll_view_height(instance, value))
-        self.scroll_view.add_widget(self.scroll_view_content)
-
-        self.load_format()
-
-        self.add_widget(self.scroll_view)
-
-        self.add_question_button = Button(text='Add Question',
-                                          size_hint=(0.3, 0.1),
-                                          pos_hint={'center_x': 0.5})
-        self.add_question_button.bind(on_press=self.on_add_question)
-        self.add_widget(self.add_question_button)
-
     def adjust_scroll_view_height(self, instance, value):
-        instance.height = value + len(self.children) * dp(10)
+        instance.height = value + len(self.children) * dp(30)
 
     def load_format(self):
         self.scroll_view_content.clear_widgets()
@@ -134,7 +150,6 @@ class HwydScreen(BoxLayout):
                 try:
                     qw.load_answer(answers[question['question'][0]])
                 except:
-                    print('137')
                     answers[question['question'][0]] = {}
                     qw.load_answer(answers[question['question'][0]])
                 qw.bind(answer_changed=self.on_answer_change)
@@ -148,7 +163,7 @@ class HwydScreen(BoxLayout):
 
     def on_file(self, instance):
         content = BoxLayout(orientation='vertical')
-        popup = Popup(
+        self.popup = Popup(
             title=
             'Choose a directory where to save your data or a data.json file with the correct format',
             content=content,
@@ -162,18 +177,18 @@ class HwydScreen(BoxLayout):
             file_chooser = FileChooserListView(path='/', dirselect=True, multiselect=False)
         button_layout = BoxLayout(orientation='horizontal', spacing=dp(20), size_hint=(1, 0.2))
         load_file_btn = Button(text='Load', size_hint=(0.1, 1), pos_hint={'center_x': 0.25})
-        load_file_btn.bind(
-            on_press=lambda instance: self.on_load_file(instance, popup, file_chooser.selection))
+        load_file_btn.bind(on_press=lambda instance: self.on_load_file(
+            instance, self.popup, file_chooser.selection))
         save_file_btn = Button(text='Save', size_hint=(0.1, 1), pos_hint={'center_x': 0.75})
-        save_file_btn.bind(
-            on_press=lambda instance: self.on_save_file(instance, popup, file_chooser.selection))
+        save_file_btn.bind(on_press=lambda instance: self.on_save_file(
+            instance, self.popup, file_chooser.selection))
         button_layout.add_widget(load_file_btn)
         button_layout.add_widget(save_file_btn)
         content.add_widget(file_chooser)
         content.add_widget(button_layout)
-        popup.open()
+        self.popup.open()
 
-    def on_save_file(self, instance, popup, file_path):
+    def on_save_file(self, instance, file_path):
         if os.path.isdir(file_path[0]):
             p = Path(os.path.join(file_path[0], 'data.json'))
             p.touch(exist_ok=False)
@@ -185,9 +200,9 @@ class HwydScreen(BoxLayout):
             f.write(json.dumps(self.config, indent=4))
         with open(self.f_name, 'w') as f:
             f.write(json.dumps(self.data, indent=4))
-        popup.dismiss()
+        self.popup.dismiss()
 
-    def on_load_file(self, instance, popup, file_path):
+    def on_load_file(self, instance, file_path):
         if os.path.isdir(file_path[0]):
             # Give error hint
             return
@@ -201,30 +216,12 @@ class HwydScreen(BoxLayout):
                 self.data = json.load(f)
             except:
                 self.data = {}
-        popup.dismiss()
+        self.popup.dismiss()
         self.load_format()
 
     def on_stop(self):
         with open(self.f_name, 'w') as f:
             f.write(json.dumps(self.data, indent=4))
-
-    def on_calendar_touch(self, instance, value):
-        # try if no 'current date' key
-        self.load_format()
-        try:
-            answers = self.data[self.calendar.get_current_date()]
-        except KeyError:
-            self.data[self.calendar.get_current_date()] = {}
-            answers = self.data[self.calendar.get_current_date()]
-        for question in self.question_widgets:
-            qw = self.question_widgets[question]
-            # try if no 'question' key
-            try:
-                qw.load_answer(answers[question])
-            except KeyError as error:
-                print('on_calendar_touch')
-                answers[qw.question_json['question'][0]] = {}
-                qw.load_answer(answers[qw.question_json['question'][0]])
 
     def on_answer_change(self, instance, value):
         with open(self.f_name, 'w') as f:
@@ -238,9 +235,9 @@ class HwydScreen(BoxLayout):
         self.load_format()
 
     def on_add_question(self, instance):
-        popup = EditQuestionPopup(title='Add a new question', auto_dismiss=False)
-        popup.bind(finished=lambda instance, value: self.add_question(instance.question_json))
-        popup.open()
+        self.popup = EditQuestionPopup(title='Add a new question', auto_dismiss=False)
+        self.popup.bind(finished=lambda instance, value: self.add_question(instance.question_json))
+        self.popup.open()
 
     def add_question(self, question_json):
         self.data['format'].append(question_json)
@@ -248,15 +245,38 @@ class HwydScreen(BoxLayout):
             f.write(json.dumps(self.data, indent=4))
         self.load_format()
 
+    # def on_keyboard_down(self, keyboard, keycode, text, modifiers, who_knows):
+    def on_keyboard_down(*args):
+        # print(args[2])
+        if args[2] == 27:
+            for widget in App.get_running_app().root_window.children:
+                if type(widget) == EditQuestionPopup:
+                    widget.on_discard(widget)
+                elif type(widget) == Popup:
+                    widget.dismiss()
+        return True
+
 
 class HWYD(App):
+    screen_manager = ObjectProperty()
+
     def build(self):
+        self.screen_manager = ScreenManager()
         root_dir = self.user_data_dir
-        self.screen = HwydScreen(root_dir=root_dir)
-        return self.screen
+        self.screen = HwydScreen(root_dir=root_dir, screen_manager=self.screen_manager)
+        self.screen_manager.switch_to(self.screen)
+
+        # if platform == 'android':
+        #     service = AndroidService('Questionaire Reminder Service', 'started')
+        #     service.start('service started')
+        #     print(dir(service))
+        return self.screen_manager
 
     def on_stop(self):
         self.screen.on_stop()
+
+    def on_pause(self):
+        return True
 
 
 if __name__ == '__main__':
