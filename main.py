@@ -247,14 +247,14 @@ class HwydScreen(Screen):
 
     # def on_keyboard_down(self, keyboard, keycode, text, modifiers, who_knows):
     def on_keyboard_down(*args):
-        # print(args[2])
         if args[2] == 27:
             for widget in App.get_running_app().root_window.children:
                 if type(widget) == EditQuestionPopup:
                     widget.on_discard(widget)
+                    return True
                 elif type(widget) == Popup:
                     widget.dismiss()
-        return True
+                    return True
 
 
 class HWYD(App):
