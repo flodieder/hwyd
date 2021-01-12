@@ -177,11 +177,11 @@ class HwydScreen(Screen):
             file_chooser = FileChooserListView(path='/', dirselect=True, multiselect=False)
         button_layout = BoxLayout(orientation='horizontal', spacing=dp(20), size_hint=(1, 0.2))
         load_file_btn = Button(text='Load', size_hint=(0.1, 1), pos_hint={'center_x': 0.25})
-        load_file_btn.bind(on_press=lambda instance: self.on_load_file(
-            instance, self.popup, file_chooser.selection))
+        load_file_btn.bind(
+            on_press=lambda instance: self.on_load_file(instance, file_chooser.selection))
         save_file_btn = Button(text='Save', size_hint=(0.1, 1), pos_hint={'center_x': 0.75})
-        save_file_btn.bind(on_press=lambda instance: self.on_save_file(
-            instance, self.popup, file_chooser.selection))
+        save_file_btn.bind(
+            on_press=lambda instance: self.on_save_file(instance, file_chooser.selection))
         button_layout.add_widget(load_file_btn)
         button_layout.add_widget(save_file_btn)
         content.add_widget(file_chooser)
