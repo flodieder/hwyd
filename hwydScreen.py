@@ -216,9 +216,8 @@ class HwydScreen(Screen):
 
     def add_question(self, question_json):
         self.data['format'].append(question_json)
-        # with open(self.f_name, 'w') as f:
-        #     f.write(json.dumps(self.data, indent=4))
         self.dump_data = not self.dump_data
+        self.load_data = not self.load_data
         self.load_format()
 
     # def on_keyboard_down(self, keyboard, keycode, text, modifiers, who_knows):
