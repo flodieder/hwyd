@@ -38,6 +38,8 @@ Window.softinput_mode = 'below_target'
 
 
 class AnaScreen(Screen):
+    """ A Screen that contains a ScrollView for anaQuestionWidgets. """
+
     dump_data = BooleanProperty(True)
     to_main = BooleanProperty(True)
 
@@ -60,9 +62,7 @@ class AnaScreen(Screen):
         self.action_bar.add_widget(self.action_view)
         self.top_layout.add_widget(self.action_bar)
 
-        self.scroll_view = ScrollView(size_hint=(1, None),
-                                      size=(Window.width,
-                                            Window.height - self.action_bar.height - 10))
+        self.scroll_view = ScrollView(size_hint=(1, 1))
         self.scroll_view.do_scroll_x = False
         self.scroll_view.do_scroll_y = True
         self.scroll_view_content = GridLayout(size_hint_y=None,

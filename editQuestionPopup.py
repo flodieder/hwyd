@@ -27,6 +27,7 @@ from questionWidget import QuestionWidget
 
 
 class EditQuestionPopup(Popup):
+    """ A Popup that allows a question to be added and/or changed. """
 
     finished = BooleanProperty(True)
     removed = BooleanProperty(True)

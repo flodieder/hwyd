@@ -233,6 +233,13 @@ class CalendarWidget(RelativeLayout):
 
         # Change active date
         self.active_date = [self.active_date[0], self.quarter_nums[0][1], self.quarter_nums[0][0]]
+
+        # Catch non existing dates
+        if self.active_date[0] >= 29 and self.active_date[1] == 2:
+            self.active_date[0] = 28
+        elif self.active_date[0] > 30 and self.active_date[1] in [4, 6, 9, 11]:
+            self.active_date[0] = 30
+
         self.current_date = self.get_current_date()
 
         # Name of prev screen
@@ -256,6 +263,12 @@ class CalendarWidget(RelativeLayout):
 
         # Change active date
         self.active_date = [self.active_date[0], self.quarter_nums[2][1], self.quarter_nums[2][0]]
+
+        if self.active_date[0] >= 29 and self.active_date[1] == 2:
+            self.active_date[0] = 28
+        elif self.active_date[0] > 30 and self.active_date[1] in [4, 6, 9, 11]:
+            self.active_date[0] = 30
+
         self.current_date = self.get_current_date()
 
         # Name of prev screen
@@ -286,7 +299,18 @@ class CalendarWidget(RelativeLayout):
                 self.go_next(None)
 
     def get_current_date(self):
-        return "%s.%s.%s" % tuple(self.active_date)
+        d = self.active_date[0]
+        if d < 10:
+            d = '0' + str(d)
+        else:
+            d = str(d)
+        m = self.active_date[1]
+        if m < 10:
+            m = '0' + str(m)
+        else:
+            m = str(m)
+        y = str(self.active_date[2])
+        return f"{d}.{m}.{y}"
 
     # Gets Monday, Tuesday, etc. and returns True if the current selected day is that day
     def compare_day_name(self, dayname):

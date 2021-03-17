@@ -20,7 +20,7 @@ from kivy.properties import ObjectProperty
 import os
 import json
 from pathlib import Path
-from datetime import date
+from datetime import date, datetime
 import plyer
 import matplotlib
 from garden_matplotlib.backend_kivyagg import FigureCanvas
@@ -30,6 +30,7 @@ from questionWidget import QuestionWidget
 from editQuestionPopup import EditQuestionPopup
 from anaScreen import AnaScreen
 from hwydScreen import HwydScreen
+
 if platform == 'android':
     from android.storage import app_storage_path, primary_external_storage_path, secondary_external_storage_path
     from android.permissions import request_permissions, Permission
@@ -39,9 +40,15 @@ Window.softinput_mode = 'below_target'
 
 
 class HWYD(App):
+    """ An App that allows to record questionaires and to analyse them."""
     screen_manager = ObjectProperty()
 
     def build(self):
+        self.permission_requested = False
+        if platform == 'android':
+            request_permissions([Permission.WRITE_EXTERNAL_STORAGE])
+        self.permission_requested = True
+
         self.screen_manager = ScreenManager()
         root_dir = self.user_data_dir
         self.data, self.config = self.init_data(root_dir)
@@ -68,11 +75,10 @@ class HWYD(App):
         self.screen_manager.switch_to(self.hwyd_screen, direction='right')
 
     def switch_to_ana(self):
+        self.ana_screen.load_data_dic(self.data)
         self.screen_manager.switch_to(self.ana_screen, direction='left')
 
     def init_data(self, root_dir):
-        if platform == 'android':
-            request_permissions([Permission.WRITE_EXTERNAL_STORAGE])
 
         if not os.path.exists(root_dir):
             os.makedirs(root_dir)
@@ -110,6 +116,12 @@ class HWYD(App):
                 self.data = json.load(f)
             except:
                 self.data = {}
+        self.data = {
+            x: self.data[x]
+            for x in sorted(self.data,
+                            key=lambda value: datetime.strptime(value, '%d.%m.%Y')
+                            if (value != 'format') else datetime.min)
+        }
         self.hwyd_screen.load_data_dic(self.data)
         self.ana_screen.load_data_dic(self.data)
 
@@ -122,10 +134,12 @@ class HWYD(App):
             f.write(json.dumps(self.config, indent=4))
 
     def on_stop(self):
-        pass
+        print('on_stop called')
 
     def on_pause(self):
         print('on_pause called')
+        if self.permission_requested:
+            self.on_stop()
         return True
 
     def on_resume(self):

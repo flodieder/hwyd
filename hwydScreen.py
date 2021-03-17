@@ -28,6 +28,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from questionWidget import QuestionWidget
 from editQuestionPopup import EditQuestionPopup
+from filePopup import FilePopup
 from anaScreen import AnaScreen
 if platform == 'android':
     from android.storage import app_storage_path, primary_external_storage_path, secondary_external_storage_path
@@ -38,6 +39,7 @@ Window.softinput_mode = 'below_target'
 
 
 class HwydScreen(Screen):
+    """ The main Screen of the HWYD app. It displays a calendar, the questionaire of the day inside a ScrollView and a Button to add new questions. """
 
     dump_data = BooleanProperty(True)
     dump_config = BooleanProperty(True)
@@ -144,59 +146,26 @@ class HwydScreen(Screen):
             pass
 
     def on_file(self, instance):
-        content = BoxLayout(orientation='vertical')
-        self.popup = Popup(
+        popup = FilePopup(
             title=
             'Choose a directory where to save your data or a data.json file with the correct format',
-            content=content,
-            auto_dismiss=False)
-        if platform == 'android':
-            request_permissions([Permission.WRITE_EXTERNAL_STORAGE])
-            file_chooser = FileChooserListView(path=primary_external_storage_path(),
-                                               dirselect=True,
-                                               multiselect=False)
-        else:
-            file_chooser = FileChooserListView(path='/', dirselect=True, multiselect=False)
-        button_layout = BoxLayout(orientation='horizontal', spacing=dp(20), size_hint=(1, 0.2))
-        load_file_btn = Button(text='Load', size_hint=(0.1, 1), pos_hint={'center_x': 0.25})
-        load_file_btn.bind(
-            on_press=lambda instance: self.on_load_file(instance, file_chooser.selection))
-        save_file_btn = Button(text='Save', size_hint=(0.1, 1), pos_hint={'center_x': 0.75})
-        save_file_btn.bind(
-            on_press=lambda instance: self.on_save_file(instance, file_chooser.selection))
-        button_layout.add_widget(load_file_btn)
-        button_layout.add_widget(save_file_btn)
-        content.add_widget(file_chooser)
-        content.add_widget(button_layout)
-        self.popup.open()
+            auto_dismiss=False,
+            data_dic=self.data,
+            config_dic=self.config)
+        popup.bind(load=lambda instance, value: self.on_load_file())
+        popup.bind(save=lambda instance, value: self.on_save_file())
+        popup.open()
 
-    def on_save_file(self, instance, file_path):
-        if os.path.isdir(file_path[0]):
-            p = Path(os.path.join(file_path[0], 'data.json'))
-            p.touch(exist_ok=False)
-            self.f_name = str(p)
-        else:
-            self.f_name = file_path[0]
-        self.config['data_file'] = self.f_name
-
+    def on_save_file(self):
         self.dump_config = not self.dump_config
         self.dump_data = not self.dump_data
-        self.popup.dismiss()
 
-    def on_load_file(self, instance, file_path):
-        if os.path.isdir(file_path[0]):
-            # Give error hint
-            return
-        else:
-            self.f_name = file_path[0]
-        self.config['data_file'] = self.f_name
+    def on_load_file(self):
         self.dump_config = not self.dump_config
         self.load_data = not self.load_data
-        self.popup.dismiss()
 
     def load_data_dic(self, data_dic):
         self.data = data_dic
-        print(self.data)
         self.load_format()
 
     def on_answer_change(self, instance, value):
@@ -227,7 +196,7 @@ class HwydScreen(Screen):
                 if type(widget) == EditQuestionPopup:
                     widget.on_discard(widget)
                     return True
-                elif type(widget) == Popup:
+                elif type(widget) == FilePopup:
                     widget.dismiss()
                     return True
             if self.screen_manager.current == 'HWYD_ana_screen':
