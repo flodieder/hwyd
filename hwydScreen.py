@@ -52,7 +52,6 @@ class HwydScreen(Screen):
         self.screen_manager = kwargs['screen_manager']
         Window.bind(on_key_down=self.on_keyboard_down)
         self.top_layout = BoxLayout(orientation='vertical', spacing=dp(10))
-        # self.init_data(kwargs['root_dir'])
         self.data = kwargs['data_dic']
         self.config = kwargs['config_dic']
         self.init_layout()
@@ -176,6 +175,7 @@ class HwydScreen(Screen):
 
     def on_removed(self, instance, value):
         self.data['format'].remove(instance.question_json)
+        self.dump_data = not self.dump_data
         self.load_format()
 
     def on_add_question(self, instance):

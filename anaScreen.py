@@ -82,8 +82,8 @@ class AnaScreen(Screen):
         self.to_main = not self.to_main
 
     def load_format(self):
+        plt.close('all')
         self.scroll_view_content.clear_widgets()
-        # try if no 'format'
         for question in self.data['format']:
             qw = AnaQuestionWidget(self.data, **question)
             self.question_widgets[question['question'][0]] = qw

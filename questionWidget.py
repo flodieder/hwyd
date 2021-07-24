@@ -39,6 +39,7 @@ class QuestionWidget(GridLayout):
         self.inclusive_layout = None
         self.exclusive_layout = None
         self.counter_layout = None
+        self.image_layout = None
         self.label_cb_layout = None
 
         for (option_type, option_name) in self.question_json['options']:
@@ -85,6 +86,14 @@ class QuestionWidget(GridLayout):
                 self.counter_layout.add_widget(minus_btn)
                 self.option_widgets[option_name] = count_input
                 self.answer[option_name] = 0.0
+            if option_type == 'image':
+                if self.image_layout == None:
+                    self.image_layout = BoxLayout(orientation='horizontal')
+                picture_btn = Button(text='Take a picture')
+                picture_btn.bind(on_press=self.on_picture_btn)
+                self.image_layout.add_widget(picture_btn)
+                self.option_widgets[option_name] = picture_btn
+                self.answer[option_name] = ['']
 
         if self.inclusive_layout != None:
             self.add_widget(self.inclusive_layout)
@@ -92,6 +101,8 @@ class QuestionWidget(GridLayout):
             self.add_widget(self.exclusive_layout)
         if self.counter_layout != None:
             self.add_widget(self.counter_layout)
+        if self.image_layout != None:
+            self.add_widget(self.image_layout)
 
     def on_edit_question(self, instance):
         from editQuestionPopup import EditQuestionPopup
@@ -107,6 +118,9 @@ class QuestionWidget(GridLayout):
 
     def on_question_removed(self):
         self.removed = not self.removed
+
+    def on_picture_btn(self, instance):
+        print('yeah')
 
     def disable_edit(self):
         self.question_layout.remove_widget(self.edit_question_btn)

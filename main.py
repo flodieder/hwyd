@@ -78,7 +78,7 @@ class HWYD(App):
         self.ana_screen.load_data_dic(self.data)
         self.screen_manager.switch_to(self.ana_screen, direction='left')
 
-    def init_data(self, root_dir):
+    def init_data(self, root_dir: str):
 
         if not os.path.exists(root_dir):
             os.makedirs(root_dir)
