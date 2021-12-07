@@ -36,7 +36,7 @@ version = 0.1
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3,kivy==2.0.0,android,plyer,matplotlib==3.3.3
+requirements = python3,libffi,kivy,android,plyer,matplotlib
 
 # (str) Custom source folders for requirements
 # Sets custom source for any requirements with recipes
