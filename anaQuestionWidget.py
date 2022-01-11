@@ -264,13 +264,22 @@ class AnaQuestionWidget(BoxLayout):
                     x['no data'] += 1
         fig1 = plt.figure(figsize=(3, 3), facecolor='black')
         ax = fig1.add_subplot(1, 1, 1)
-        ax.pie(list(x.values()),
-               labels=x.keys(),
-               autopct='%.0f%%',
-               textprops={
-                   'color': 'white',
-                   'size': self.font_size
-               })
+        try:
+            ax.pie(list(x.values()),
+                   labels=x.keys(),
+                   autopct='%.0f%%',
+                   textprops={
+                       'color': 'white',
+                       'size': self.font_size
+                   })
+        except ValueError as error:
+            ax.pie([1],
+                   labels=['Error'],
+                   autopct='%.0f%%',
+                   textprops={
+                       'color': 'white',
+                       'size': self.font_size
+                   })
         return FigureCanvas(fig1)
 
     def create_streak_canvas(self):

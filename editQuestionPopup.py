@@ -24,6 +24,7 @@ from pathlib import Path
 from copy import deepcopy
 
 from questionWidget import QuestionWidget
+from takePhotoPopup import TakePhotoPopup
 
 
 class EditQuestionPopup(Popup):
@@ -64,7 +65,7 @@ class EditQuestionPopup(Popup):
 
         self.content.add_widget(Label(text='Preview:', size_hint=(1, 0.01)))
 
-        self.qw = QuestionWidget(**self.question_json)
+        self.qw = QuestionWidget(root_dir='', **self.question_json)
         self.qw.disable_edit()
         self.qw.size_hint_y = 0.1
         self.content.add_widget(self.qw)
@@ -179,7 +180,7 @@ class EditQuestionPopup(Popup):
 
     def refresh_question_widget(self):
         self.content.remove_widget(self.qw)
-        self.qw = QuestionWidget(**self.question_json)
+        self.qw = QuestionWidget(root_dir='', **self.question_json)
         self.qw.disable_edit()
         self.qw.size_hint_y = 0.1
         self.content.add_widget(self.qw, index=3)

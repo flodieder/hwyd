@@ -46,7 +46,7 @@ class HWYD(App):
     def build(self):
         self.permission_requested = False
         if platform == 'android':
-            request_permissions([Permission.WRITE_EXTERNAL_STORAGE])
+            request_permissions([Permission.WRITE_EXTERNAL_STORAGE, Permission.CAMERA])
         self.permission_requested = True
 
         self.screen_manager = ScreenManager()
@@ -54,7 +54,7 @@ class HWYD(App):
         self.data, self.config = self.init_data(root_dir)
         self.hwyd_screen = HwydScreen(data_dic=self.data,
                                       config_dic=self.config,
-                                      screen_manager=self.screen_manager)
+                                      screen_manager=self.screen_manager, root_dir=self.config['data_file'])
         self.hwyd_screen.bind(dump_data=lambda instance, value: self.on_dump_data())
         self.hwyd_screen.bind(dump_config=lambda instance, value: self.on_dump_config())
         self.hwyd_screen.bind(load_data=lambda instance, value: self.on_load_data())

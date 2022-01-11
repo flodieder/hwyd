@@ -1,11 +1,15 @@
+import os
+from datetime import datetime
 import kivy
 kivy.require('2.0.0')
 
 from kivy.app import App
 from kivy.uix.label import Label
 from kivy.uix.relativelayout import RelativeLayout
+from kivy.uix.popup import Popup
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
+from kivy.uix.scatter import Scatter
 from kivy.uix.layout import Layout
 from kivy.uix.textinput import TextInput
 from kivy.uix.checkbox import CheckBox
@@ -14,6 +18,11 @@ from kivy.uix.button import Button
 from kivy.properties import BooleanProperty
 from kivy.metrics import dp, sp
 from copy import deepcopy
+from kivy.uix.camera import Camera
+from plyer import camera
+from plyer import accelerometer
+
+from takePhotoPopup import TakePhotoPopup
 
 
 class QuestionWidget(GridLayout):
@@ -22,8 +31,9 @@ class QuestionWidget(GridLayout):
     format_changed = BooleanProperty(True)
     removed = BooleanProperty(True)
 
-    def __init__(self, **kwargs):
+    def __init__(self, root_dir, **kwargs):
         super(QuestionWidget, self).__init__(cols=1, size_hint_y=None, row_default_height=dp(40))
+        self.root_dir = root_dir
         self.question_json = kwargs
         self.answer = {}
         self.option_widgets = {}
@@ -119,8 +129,19 @@ class QuestionWidget(GridLayout):
     def on_question_removed(self):
         self.removed = not self.removed
 
+    def camera_done(self, e):
+        print(e)
+
+
     def on_picture_btn(self, instance):
-        print('yeah')
+        # camera = AndroidCamera()
+        camera.take_picture(on_complete=self.camera_done, filename=f"{self.root_dir} /test.jpg")
+        accelerometer.enable()
+        print(accelerometer.acceleration)
+        camera_popup = TakePhotoPopup(root_dir=self.root_dir)
+        camera_popup.open()
+
+
 
     def disable_edit(self):
         self.question_layout.remove_widget(self.edit_question_btn)

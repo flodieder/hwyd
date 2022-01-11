@@ -54,6 +54,7 @@ class HwydScreen(Screen):
         self.top_layout = BoxLayout(orientation='vertical', spacing=dp(10))
         self.data = kwargs['data_dic']
         self.config = kwargs['config_dic']
+        self.root_dir = kwargs['root_dir']
         self.init_layout()
 
     def init_layout(self):
@@ -127,7 +128,7 @@ class HwydScreen(Screen):
                             continue
                 except:
                     question['scheduling'] = ['daily', '']
-                qw = QuestionWidget(**question)
+                qw = QuestionWidget(root_dir=self.root_dir, **question)
                 self.question_widgets[question['question'][0]] = qw
                 # try if no 'question' key
                 try:
