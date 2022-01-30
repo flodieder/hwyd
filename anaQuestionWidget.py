@@ -331,12 +331,14 @@ class AnaQuestionWidget(BoxLayout):
                             y.append(0)
                         pass
         else:
-            return
+            fig1 = plt.figure(figsize=(3, 3), facecolor='black')
+            return FigureCanvas(fig1)
         streak_info = {}
         for _, option_name in self.question_json['options']:
             streak_info[option_name] = {'max': 0, 'current': 0}
         if len(x) < 1:
-            return
+            fig1 = plt.figure(figsize=(3, 3), facecolor='black')
+            return FigureCanvas(fig1)
         day_before = x[0]
         for opt, day in zip(y, x):
             if 1 < abs(

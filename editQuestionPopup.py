@@ -117,6 +117,14 @@ class EditQuestionPopup(Popup):
         image_opt_remove_btn.bind(
             on_press=lambda instance: self.on_remove_question_opt_added(instance, 'image'))
 
+        timer_opt_txt = TextInput(hint_text='Timer')
+        timer_opt_add_btn = Button(text='Add')
+        timer_opt_add_btn.bind(on_press=lambda instance: self.on_add_question_opt_added(
+            instance, 'timer', timer_opt_txt.text))
+        timer_opt_remove_btn = Button(text='Remove')
+        timer_opt_remove_btn.bind(
+            on_press=lambda instance: self.on_remove_question_opt_added(instance, 'timer'))
+
         answer_layout.add_widget(unconstrained_txt)
         answer_layout.add_widget(unconstrained_add_btn)
         answer_layout.add_widget(unconstrained_remove_btn)
@@ -132,6 +140,9 @@ class EditQuestionPopup(Popup):
         answer_layout.add_widget(image_opt_txt)
         answer_layout.add_widget(image_opt_add_btn)
         answer_layout.add_widget(image_opt_remove_btn)
+        answer_layout.add_widget(timer_opt_txt)
+        answer_layout.add_widget(timer_opt_add_btn)
+        answer_layout.add_widget(timer_opt_remove_btn)
 
         button_layout = BoxLayout(orientation='horizontal', size_hint_y=0.05)
         ok_button = Button(text='OK', size_hint=(0.2, 1))
