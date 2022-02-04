@@ -73,7 +73,7 @@ class AnaQuestionWidget(BoxLayout):
 
         self.top_layout = BoxLayout(orientation='horizontal', size_hint=(1, 0.1))
         self.ana_spinner = Spinner(text=self.analysis[0],
-                                   values=('none', 'pie', 'line', 'streak', 'histogram'),
+                                   values=('none', 'pie', 'line', 'streak', 'histogram', 'text'),
                                    size_hint=(0.3, 1))
         self.missing_data_cb = CheckBox(size_hint=(0.2, 1))
         self.missing_data_cb.active = self.analysis[1]
@@ -426,6 +426,75 @@ class AnaQuestionWidget(BoxLayout):
         ax.set_xticks(ax.get_xticks()[::10])
         return FigureCanvas(fig1)
 
+    def create_text_canvas(self):
+        text = ""
+        use_missing_data = self.analysis[1]
+        for date in self.generate_data_range():
+            if self.question_json['options'][0][0] == 'exclusive option':
+                try:
+                    text += date + '\n'
+                    for option, value in self.data[date][self.question_json['question'][0]].items():
+                        if value:
+                            text += option + '\n'
+                except KeyError:
+                    pass
+            elif self.question_json['options'][0][0] == 'inclusive option':
+                try:
+                    text += date + ' \n'
+                    for option, value in self.data[date][self.question_json['question'][0]].items():
+                        if value:
+                            text += option + ', '
+                    text = text[:-2]
+                    text += '\n'
+                except KeyError:
+                    pass
+            elif self.question_json['options'][0][0] == 'counter':
+                try:
+                    text += date + '\n'
+                    for option, value in self.data[date][self.question_json['question'][0]].items():
+                        text += value + '\n'
+                except KeyError:
+                    if use_missing_data:
+                        text += '0' + '\n'
+                    pass
+                except ValueError:
+                    if use_missing_data:
+                        text += '0' + '\n'
+                    pass
+            elif self.question_json['options'][0][0] == 'unconstrained input':
+                try:
+                    text += date + '\n'
+                    for option, value in self.data[date][self.question_json['question'][0]].items():
+                        if (not value.strip()) and (not use_missing_data):
+                            text = text[:text.rfind('\n', 0, len(text) - 2)]
+                        text += value + '\n'
+                except KeyError:
+                    if not use_missing_data:
+                        index = text.rfind('\n', 0, len(text) - 2)
+                        if index != -1:
+                            text = text[:index]
+                            text += '\n'
+                        else:
+                            text = ""
+                    pass
+        scroll_view = ScrollView(size_hint=(1, 1)) 
+        scroll_view.do_scroll_x = True
+        scroll_view.do_scroll_y = True
+        scroll_view_content = GridLayout(size_hint_y=None,
+                                              cols=1,
+                                              spacing=dp(60),
+                                              padding=(0, dp(20), 0, dp(20)))
+
+        scroll_view_content.bind(
+            minimum_height=lambda instance, value: self.adjust_scroll_view_height(instance, value))
+        label = Label(text=text, text_size=(Window.width-dp(20), None))
+        scroll_view_content.add_widget(label)
+        scroll_view.add_widget(scroll_view_content)
+        return scroll_view
+
+    def adjust_scroll_view_height(self, instance, value):
+        instance.height = value + instance.children[0].text.count('\n') * dp(20)
+
     def create_graph(self):
         self.analysis_layout.remove_widget(self.analysis_canvas)
         ana_type = self.analysis[0]
@@ -439,5 +508,7 @@ class AnaQuestionWidget(BoxLayout):
             self.analysis_canvas = self.create_streak_canvas()
         elif ana_type == 'line':
             self.analysis_canvas = self.create_line_canvas()
+        elif ana_type == 'text':
+            self.analysis_canvas = self.create_text_canvas()
         self.analysis_layout.add_widget(self.analysis_canvas)
         return
