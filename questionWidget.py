@@ -96,7 +96,8 @@ class QuestionWidget(GridLayout):
 
                 plus_btn = Button(text='+')
                 minus_btn = Button(text='-')
-                count_input = TextInput(input_filter='float', multiline=False)
+                # count_input = TextInput(text='0.0', input_filter='float', multiline=False)
+                count_input = TextInput(multiline=False)
                 count_input.bind(text=self.create_callback(option_name))
                 plus_btn.bind(on_press=self.create_on_plus(option_name))
                 minus_btn.bind(on_press=self.create_on_minus(option_name))
@@ -104,7 +105,8 @@ class QuestionWidget(GridLayout):
                 self.counter_layout.add_widget(count_input)
                 self.counter_layout.add_widget(minus_btn)
                 self.option_widgets[option_name] = count_input
-                self.answer[option_name] = 0.0
+                self.option_widgets[option_name].text = str(0.0)
+                self.answer[option_name] = "0.0"
             if option_type == 'image':
                 if self.image_layout == None:
                     self.image_layout = BoxLayout(orientation='horizontal')
@@ -238,8 +240,12 @@ class QuestionWidget(GridLayout):
                     self.option_widgets[option_name].active = False
                     self.answer[option_name] = False
                 elif type(self.option_widgets[option_name]) == TextInput:
-                    self.option_widgets[option_name].text = ''
-                    self.answer[option_name] = ''
+                    if option_type == 'counter':
+                        self.option_widgets[option_name].text = '0.0'
+                        self.answer[option_name] = '0.0'
+                    else:
+                        self.option_widgets[option_name].text = ''
+                        self.answer[option_name] = ''
 
         for key in self.answer:
             try:
